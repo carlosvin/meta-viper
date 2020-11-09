@@ -1,0 +1,2 @@
+= Configure Viper using struct
+It is work in progress, but you can already use it, see the example in link:./cmd/main.go[./cmd/main.go].
