@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	config "github.com/carlosvin/go-config-example/internal"
 )
@@ -15,7 +16,7 @@ type CfgStruct struct {
 
 func main() {
 	cfg := &CfgStruct{Host: "localhost", Port: 6000}
-	config.Load(cfg)
+	config.New(cfg, os.Args)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %s!", r.URL.Path[1:])
 	})
