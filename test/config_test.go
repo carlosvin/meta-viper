@@ -54,7 +54,18 @@ func TestFlags(t *testing.T) {
 	assert.Equal(t, 123, tc.B)
 	assert.Equal(t, int64(math.MinInt64), tc.B64)
 	assert.Equal(t, 1.1111, tc.C)
+}
 
+func TestFiles(t *testing.T) {
+
+	tc := &TestConfig{A: "default", B: 123, B64: 1, C: 1.1111}
+	cfg := config.New(tc, []string{"--config=test"})
+	cfg.Load()
+
+	assert.Equal(t, "from json", tc.A)
+	assert.Equal(t, -2, tc.B)
+	assert.Equal(t, int64(1000000000000000), tc.B64)
+	assert.Equal(t, 0.001, tc.C)
 }
 
 func cleanupEnv() {

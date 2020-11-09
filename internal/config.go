@@ -80,6 +80,7 @@ func (a *appConfig) initFiles() {
 	// Config files
 	configName := a.v.GetString("config")
 	a.v.SetConfigName(configName)
+	a.v.AddConfigPath(".")
 	a.v.AddConfigPath("configs")
 	a.v.AddConfigPath("../configs")
 	a.v.WatchConfig()
