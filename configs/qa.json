@@ -1,0 +1,7 @@
+{
+    "host": "qa.host",
+    "port": 8000,
+    "apis": {
+        "search": "https://search.api/"
+    }
+}
