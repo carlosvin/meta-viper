@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	config "github.com/carlosvin/meta-viper/pkg"
+	config "github.com/carlosvin/meta-viper"
 )
 
 type cfgStruct struct {
@@ -19,8 +19,14 @@ type cfgStruct struct {
 }
 
 func main() {
-	cfg := &cfgStruct{Host: "localhost", Port: 6000, SearchAPI: "https://google.es"}
-	config.New(cfg, os.Args)
+	cfg := &cfgStruct{
+		Host:      "localhost",
+		Port:      6000,
+		SearchAPI: "https://google.es"}
+	_, err := config.New(cfg, os.Args)
+	if err != nil {
+		panic(err)
+	}
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %s!", r.URL.Path[1:])
 	})

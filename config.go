@@ -20,15 +20,16 @@ const flagDirs = "config-dirs"
 
 // Cfg Configuration loader
 type Cfg interface {
-	Load() error
+	// Reload the configured attributes in the structure from env, flags and/or configuration files
+	Reload() error
 }
 
 type cfgLoader struct {
 	cfg interface{}
 }
 
-// New The the configuration from files, env and flags
-func New(cfg interface{}, args []string) Cfg {
+// New Instantiate a configuration loader. It loads the configuration into cfg argument.
+func New(cfg interface{}, args []string) (Cfg, error) {
 	a := &appConfig{
 		v:          viper.New(),
 		cfg:        cfg,
@@ -36,10 +37,19 @@ func New(cfg interface{}, args []string) Cfg {
 		searchDirs: getSearchDirs(args),
 	}
 	a.initEnv()
-	a.initFlags(args)
-	a.initFiles()
-	a.loadValues()
-	return a
+	err := a.initFlags(args)
+	if err != nil {
+		return nil, err
+	}
+	err = a.initFiles()
+	if err != nil {
+		return nil, err
+	}
+	err = a.loadValues()
+	if err != nil {
+		return nil, err
+	}
+	return a, nil
 }
 
 func getBaseSearchDirs(program string) []string {
@@ -66,10 +76,9 @@ func getSearchDirs(args []string) []string {
 	return dirs
 }
 
-// Load The the configuration from files, env and flags
-func (a *appConfig) Load() error {
-	a.loadValues()
-	return nil
+// Reload The configuration from files, env and flags
+func (a *appConfig) Reload() error {
+	return a.loadValues()
 }
 
 // appConfig Application configuration
@@ -86,19 +95,23 @@ func (a *appConfig) initEnv() {
 	a.v.AutomaticEnv()
 }
 
-func (a *appConfig) initFlags(args []string) {
+func (a *appConfig) initFlags(args []string) error {
 	// Flags config
 	flagSet := pflag.NewFlagSet("flagsConfig", pflag.ExitOnError)
 	flagSet.String(flagName, "", "Configuration name")
 	flagSet.StringSlice(flagDirs, a.searchDirs, "Configuration directories search paths")
 	for i := 0; i < a.t.NumField(); i++ {
-		a.initFlag(a.t.Field(i), a.t.Type().Field(i), flagSet)
+		err := a.initFlag(a.t.Field(i), a.t.Type().Field(i), flagSet)
+		if err != nil {
+			return err
+		}
 	}
 	flagSet.Parse(args)
 	a.v.BindPFlags(flagSet)
+	return nil
 }
 
-func (a *appConfig) initFlag(v reflect.Value, t reflect.StructField, flagSet *pflag.FlagSet) {
+func (a *appConfig) initFlag(v reflect.Value, t reflect.StructField, flagSet *pflag.FlagSet) error {
 	name, desc := t.Tag.Get("cfg_name"), t.Tag.Get("cfg_desc")
 	switch t.Type.Kind() {
 	case reflect.String:
@@ -112,39 +125,41 @@ func (a *appConfig) initFlag(v reflect.Value, t reflect.StructField, flagSet *pf
 	case reflect.Slice:
 		a.initFlagSlice(v, t, flagSet, name, desc)
 	default:
-		panicType(t.Type)
+		return errorType(t.Type)
 	}
+	return nil
 }
 
-func (a *appConfig) initFlagSlice(v reflect.Value, t reflect.StructField, flagSet *pflag.FlagSet, name, desc string) {
+func (a *appConfig) initFlagSlice(v reflect.Value, t reflect.StructField, flagSet *pflag.FlagSet, name, desc string) error {
 	switch t.Type.Elem().Kind() {
 	case reflect.String:
 		slice, ok := v.Interface().([]string)
 		if !ok {
-			panicType(t.Type)
+			return errorType(t.Type)
 		}
 		flagSet.StringSlice(name, slice, desc)
 	case reflect.Int:
 		slice, ok := v.Interface().([]int)
 		if !ok {
-			panicType(t.Type)
+			return errorType(t.Type)
 		}
 		flagSet.IntSlice(name, slice, desc)
 	default:
-		panicType(t.Type)
+		return errorType(t.Type)
 	}
+	return nil
 }
 
-func panicType(t reflect.Type) {
-	panic(fmt.Sprintf("Unexpected type %d %v", t.Kind(), t.Name()))
+func errorType(t reflect.Type) error {
+	return fmt.Errorf("unexpected type %d %v", t.Kind(), t.Name())
 }
 
-func (a *appConfig) initFiles() {
+func (a *appConfig) initFiles() error {
 	// Config files
 	configName := a.v.GetString("config")
 	if configName == "" {
 		log.Println("No configuration name has been specified, so no configuration file will be loaded. Using flags and environment variables.")
-		return
+		return nil
 	}
 	a.v.SetConfigName(configName)
 	searchDirs := a.v.GetStringSlice(flagDirs)
@@ -155,19 +170,20 @@ func (a *appConfig) initFiles() {
 	a.v.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("Config file changed:", e.Name)
 	})
-	err := a.v.ReadInConfig()
-	if err != nil {
-		panic(fmt.Errorf("fatal error config file: %s", err))
-	}
+	return a.v.ReadInConfig()
 }
 
-func (a *appConfig) loadValues() {
+func (a *appConfig) loadValues() error {
 	for i := 0; i < a.t.NumField(); i++ {
-		a.loadValue(a.t.Field(i), a.t.Type().Field(i))
+		err := a.loadValue(a.t.Field(i), a.t.Type().Field(i))
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (a *appConfig) loadValue(v reflect.Value, t reflect.StructField) {
+func (a *appConfig) loadValue(v reflect.Value, t reflect.StructField) error {
 	name := t.Tag.Get("cfg_name")
 	switch t.Type.Kind() {
 	case reflect.String:
@@ -179,22 +195,23 @@ func (a *appConfig) loadValue(v reflect.Value, t reflect.StructField) {
 	case reflect.Bool:
 		v.SetBool(a.v.GetBool(name))
 	case reflect.Slice:
-		a.loadValueSlice(v, t, name)
+		return a.loadValueSlice(v, t, name)
 	default:
-		panicType(t.Type)
-		// TODO check for nested struct and call recursively
+		return errorType(t.Type)
 	}
+	return nil
 }
 
-func (a *appConfig) loadValueSlice(v reflect.Value, t reflect.StructField, name string) {
+func (a *appConfig) loadValueSlice(v reflect.Value, t reflect.StructField, name string) error {
 	switch t.Type.Elem().Kind() {
 	case reflect.String:
 		v.Set(reflect.ValueOf(a.v.GetStringSlice(name)))
 	case reflect.Int:
 		v.Set(reflect.ValueOf(a.getIntSlice(name)))
 	default:
-		panicType(t.Type)
+		return errorType(t.Type)
 	}
+	return nil
 }
 
 func (a *appConfig) getIntSlice(name string) []int {

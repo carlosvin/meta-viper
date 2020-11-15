@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	config "github.com/carlosvin/meta-viper/pkg"
+	config "github.com/carlosvin/meta-viper"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,12 +26,15 @@ func TestEnv(t *testing.T) {
 		C: 3.1415926,
 		D: []string{"a", "b"},
 		E: []int{-1, 1}}
-	cfg := config.New(tc, []string{})
+	cfg, err := config.New(tc, []string{})
+
+	assert.NoError(t, err)
 
 	os.Setenv("B", "999")
 	os.Setenv("E", "1 2 3")
 
-	cfg.Load()
+	assert.NoError(t, cfg.Reload())
+
 	assert.Equal(t, "default", tc.A)
 	assert.Equal(t, 999, tc.B)
 	assert.Equal(t, int64(0), tc.B64)
@@ -44,7 +47,7 @@ func TestEnv(t *testing.T) {
 	os.Setenv("C", "0.99999")
 	os.Setenv("D", "1 2 3")
 
-	cfg.Load()
+	assert.NoError(t, cfg.Reload())
 	assert.Equal(t, "new value", tc.A)
 	assert.Equal(t, 999, tc.B)
 	assert.Equal(t, int64(math.MaxInt64), tc.B64)
@@ -63,9 +66,15 @@ func TestFlags(t *testing.T) {
 		"--e=1,2,3",
 	}
 
-	tc := &TestConfig{A: "default", B: 123, B64: 1, C: 1.1111, D: []string{"a", "b"}, E: []int{9, 9, 9}}
-	cfg := config.New(tc, args)
-	cfg.Load()
+	tc := &TestConfig{
+		A:   "default",
+		B:   123,
+		B64: 1,
+		C:   1.1111,
+		D:   []string{"a", "b"},
+		E:   []int{9, 9, 9}}
+	_, err := config.New(tc, args)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "imaflag", tc.A)
 	assert.Equal(t, 123, tc.B)
@@ -78,8 +87,8 @@ func TestFlags(t *testing.T) {
 func TestFiles(t *testing.T) {
 
 	tc := &TestConfig{A: "default", B: 123, B64: 1, C: 1.1111, D: []string{"a", "b"}}
-	cfg := config.New(tc, []string{"--config=test"})
-	cfg.Load()
+	_, err := config.New(tc, []string{"--config=test"})
+	assert.NoError(t, err)
 
 	assert.Equal(t, "from json", tc.A)
 	assert.Equal(t, -2, tc.B)
