@@ -2,7 +2,7 @@
 
 It loads the configuration depending on the configuration passed as argument. 
 
-== It loads the configuration from configs/qa.json file
+== It loads the configuration from link:./configs/qa.json[QA configuration file]
 [source,bash]
 ----
 go run ./cmd/main.go --config=qa
@@ -11,13 +11,13 @@ go run ./cmd/main.go --config=qa
 # 2020/11/15 20:03:39 Serving at &{qa.host 8000 https://search.api/}...
 ----
 
-.configs/qa.json
+.link:./configs/qa.json[./configs/qa.json]
 [source,json]
 ----
-include::configs/qa.json[]
+include::./configs/qa.json[]
 ----
 
-== It loads dev configuration and overrides the 'host' value
+== It loads link:./configs/dev.json[dev configuration] and overrides the 'host' value
 [source,bash]
 ----
 go run ./cmd/main.go --config=dev --host=my.local.host
@@ -25,8 +25,8 @@ go run ./cmd/main.go --config=dev --host=my.local.host
 # Output
 # 2020/11/15 20:02:16 Serving at &{my.local.host 8000 https://search.api/}...
 ----
-.configs/dev.json
+.link:./configs/dev.json[./configs/dev.json]
 [source,json]
 ----
-include::configs/dev.json[]
+include::./configs/dev.json[]
 ----
