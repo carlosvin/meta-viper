@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	config "github.com/carlosvin/meta-viper/internal"
+	config "github.com/carlosvin/meta-viper/pkg"
 	"github.com/stretchr/testify/assert"
 )
 

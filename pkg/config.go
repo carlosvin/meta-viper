@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"log"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -10,6 +12,11 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
+
+var cfgDirNames = [...]string{"config", "configs", "cfg"}
+
+const flagName = "config"
+const flagDirs = "config-dirs"
 
 type Cfg interface {
 	Load() error
@@ -22,14 +29,36 @@ type cfgLoader struct {
 // New The the configuration from files, env and flags
 func New(cfg interface{}, args []string) Cfg {
 	a := &appConfig{
-		v:   viper.New(),
-		cfg: cfg,
-		t:   reflect.ValueOf(cfg).Elem()}
+		v:          viper.New(),
+		cfg:        cfg,
+		t:          reflect.ValueOf(cfg).Elem(),
+		searchDirs: getSearchDirs(args[0]),
+	}
 	a.initEnv()
 	a.initFlags(args)
 	a.initFiles()
 	a.loadValues()
 	return a
+}
+
+func getBaseSearchDirs(program string) []string {
+	dir, err := filepath.Abs(filepath.Dir(program))
+	if err != nil {
+		log.Printf("can't find the directory of %s, using current working path", program)
+		return []string{"."}
+	}
+	return []string{dir, "."}
+}
+
+func getSearchDirs(program string) []string {
+	dirs := make([]string, 0)
+	for _, b := range getBaseSearchDirs(program) {
+		dirs = append(dirs, b)
+		for _, s := range cfgDirNames {
+			dirs = append(dirs, filepath.Join(b, s))
+		}
+	}
+	return dirs
 }
 
 // Load The the configuration from files, env and flags
@@ -40,9 +69,10 @@ func (a *appConfig) Load() error {
 
 // appConfig Application configuration
 type appConfig struct {
-	v   *viper.Viper
-	cfg interface{}
-	t   reflect.Value
+	v          *viper.Viper
+	cfg        interface{}
+	t          reflect.Value
+	searchDirs []string
 }
 
 func (a *appConfig) initEnv() {
@@ -54,7 +84,8 @@ func (a *appConfig) initEnv() {
 func (a *appConfig) initFlags(args []string) {
 	// Flags config
 	flagSet := pflag.NewFlagSet("flagsConfig", pflag.ContinueOnError)
-	flagSet.String("config", "prod", "Configuration name")
+	flagSet.String(flagName, "prod", "Configuration name")
+	flagSet.StringSlice(flagDirs, a.searchDirs, "Configuration directories search paths")
 	for i := 0; i < a.t.NumField(); i++ {
 		a.initFlag(a.t.Field(i), a.t.Type().Field(i), flagSet)
 	}
@@ -107,9 +138,10 @@ func (a *appConfig) initFiles() {
 	// Config files
 	configName := a.v.GetString("config")
 	a.v.SetConfigName(configName)
-	a.v.AddConfigPath(".")
-	a.v.AddConfigPath("configs")
-	a.v.AddConfigPath("../configs")
+	searchDirs := a.v.GetStringSlice("config-dirs")
+	for _, d := range searchDirs {
+		a.v.AddConfigPath(d)
+	}
 	a.v.WatchConfig()
 	a.v.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("Config file changed:", e.Name)

@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	config "github.com/carlosvin/meta-viper/internal"
+	config "github.com/carlosvin/meta-viper/pkg"
 )
 
 type cfgStruct struct {
