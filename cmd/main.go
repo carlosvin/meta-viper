@@ -1,3 +1,6 @@
+// This is a simple example of a command loading configuration depending on the environment
+// e.g. 1: go run ./cmd/main.go --config=qa # it loads configuration from qa.json file
+// e.g. 2: go run ./cmd/main.go --config=dev --host=my.local.host # it loads dev configuration and overrides the 'host' value
 package main
 
 import (
@@ -9,13 +12,14 @@ import (
 	config "github.com/carlosvin/go-config-example/internal"
 )
 
-type CfgStruct struct {
-	Host string `cfg_name:"host" cfg_desc:"Server host"`
-	Port int    `cfg_name:"port" cfg_desc:"Server port"`
+type cfgStruct struct {
+	Host      string `cfg_name:"host" cfg_desc:"Server host"`
+	Port      int    `cfg_name:"port" cfg_desc:"Server port"`
+	SearchAPI string `cfg_name:"apis.search" cfg_desc:"Search API endpoint"`
 }
 
 func main() {
-	cfg := &CfgStruct{Host: "localhost", Port: 6000}
+	cfg := &cfgStruct{Host: "localhost", Port: 6000, SearchAPI: "https://google.es"}
 	config.New(cfg, os.Args)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %s!", r.URL.Path[1:])
