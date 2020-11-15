@@ -13,6 +13,9 @@ Meta-Viper is a wrapper over {viper}, it uses a {go-tagged-struct} to:
 
 You can find examples at link:./examples[./examples].
 
+image:https://pkg.go.dev/badge/github.com/carlosvin/meta-viper[link="https://pkg.go.dev/github.com/carlosvin/meta-viper"]
+
+
 == Usage
 
 === Define the struct holding your application config
