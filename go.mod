@@ -1,4 +1,4 @@
-module github.com/carlosvin/go-config-example
+module github.com/carlosvin/meta-viper
 
 go 1.15
 

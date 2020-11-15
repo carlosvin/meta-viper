@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	config "github.com/carlosvin/go-config-example/internal"
+	config "github.com/carlosvin/meta-viper/internal"
 	"github.com/stretchr/testify/assert"
 )
 

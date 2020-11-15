@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	config "github.com/carlosvin/go-config-example/internal"
+	config "github.com/carlosvin/meta-viper/internal"
 )
 
 type cfgStruct struct {
