@@ -1,7 +1,6 @@
 = Configure Viper using struct
 Carlos Martin Sanchez
-v0.0
+v0.0.1
 
-CAUTION: It is work in progress. 
 
-You can already use it, see the example in link:./cmd/main.go[./cmd/main.go].
+You can already use it, see the examples at link:./examples[./examples].
