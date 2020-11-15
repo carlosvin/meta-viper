@@ -1,0 +1,32 @@
+= Multi-environment example
+
+It loads the configuration depending on the configuration passed as argument. 
+
+== It loads the configuration from configs/qa.json file
+[source,bash]
+----
+go run ./cmd/main.go --config=qa
+
+# Output
+# 2020/11/15 20:03:39 Serving at &{qa.host 8000 https://search.api/}...
+----
+
+.configs/qa.json
+[source,json]
+----
+include::configs/qa.json[]
+----
+
+== It loads dev configuration and overrides the 'host' value
+[source,bash]
+----
+go run ./cmd/main.go --config=dev --host=my.local.host
+
+# Output
+# 2020/11/15 20:02:16 Serving at &{my.local.host 8000 https://search.api/}...
+----
+.configs/dev.json
+[source,json]
+----
+include::configs/dev.json[]
+----
