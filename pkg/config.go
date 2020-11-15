@@ -33,7 +33,7 @@ func New(cfg interface{}, args []string) Cfg {
 		v:          viper.New(),
 		cfg:        cfg,
 		t:          reflect.ValueOf(cfg).Elem(),
-		searchDirs: getSearchDirs(args[0]),
+		searchDirs: getSearchDirs(args),
 	}
 	a.initEnv()
 	a.initFlags(args)
@@ -51,7 +51,11 @@ func getBaseSearchDirs(program string) []string {
 	return []string{dir, "."}
 }
 
-func getSearchDirs(program string) []string {
+func getSearchDirs(args []string) []string {
+	program := ""
+	if len(args) > 0 {
+		program = args[0]
+	}
 	dirs := make([]string, 0)
 	for _, b := range getBaseSearchDirs(program) {
 		dirs = append(dirs, b)
