@@ -94,12 +94,6 @@ func (a *appConfig) initFlagSlice(v reflect.Value, t reflect.StructField, flagSe
 			panicType(t.Type)
 		}
 		flagSet.IntSlice(name, slice, desc)
-	case reflect.Bool:
-		slice, ok := v.Interface().([]bool)
-		if !ok {
-			panicType(t.Type)
-		}
-		flagSet.BoolSlice(name, slice, desc)
 	default:
 		panicType(t.Type)
 	}
@@ -156,17 +150,21 @@ func (a *appConfig) loadValueSlice(v reflect.Value, t reflect.StructField, name 
 	case reflect.String:
 		v.Set(reflect.ValueOf(a.v.GetStringSlice(name)))
 	case reflect.Int:
-		ints := a.v.GetIntSlice(name)
-		// for some reason when it is an env, the GetIntSlice doesn't return the slice
-		if len(ints) == 0 {
-			strs := a.v.GetStringSlice(name)
-			ints = make([]int, len(strs))
-			for i := range strs {
-				ints[i], _ = strconv.Atoi(strs[i])
-			}
-		}
-		v.Set(reflect.ValueOf(ints))
+		v.Set(reflect.ValueOf(a.getIntSlice(name)))
 	default:
 		panicType(t.Type)
 	}
+}
+
+func (a *appConfig) getIntSlice(name string) []int {
+	ints := a.v.GetIntSlice(name)
+	// for some reason when it is an env, the GetIntSlice doesn't return the slice
+	if len(ints) == 0 {
+		strs := a.v.GetStringSlice(name)
+		ints = make([]int, len(strs))
+		for i := range strs {
+			ints[i], _ = strconv.Atoi(strs[i])
+		}
+	}
+	return ints
 }
