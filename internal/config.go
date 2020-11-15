@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/fsnotify/fsnotify"
@@ -70,10 +71,42 @@ func (a *appConfig) initFlag(v reflect.Value, t reflect.StructField, flagSet *pf
 		flagSet.Int64(name, v.Int(), desc)
 	case reflect.Float32, reflect.Float64:
 		flagSet.Float64(name, v.Float(), desc)
-	// TODO check for nested struct and call recursively
+	case reflect.Bool:
+		flagSet.Bool(name, v.Bool(), desc)
+	case reflect.Slice:
+		a.initFlagSlice(v, t, flagSet, name, desc)
 	default:
-		panic("Unexpected type " + t.Name)
+		panicType(t.Type)
 	}
+}
+
+func (a *appConfig) initFlagSlice(v reflect.Value, t reflect.StructField, flagSet *pflag.FlagSet, name, desc string) {
+	switch t.Type.Elem().Kind() {
+	case reflect.String:
+		slice, ok := v.Interface().([]string)
+		if !ok {
+			panicType(t.Type)
+		}
+		flagSet.StringSlice(name, slice, desc)
+	case reflect.Int:
+		slice, ok := v.Interface().([]int)
+		if !ok {
+			panicType(t.Type)
+		}
+		flagSet.IntSlice(name, slice, desc)
+	case reflect.Bool:
+		slice, ok := v.Interface().([]bool)
+		if !ok {
+			panicType(t.Type)
+		}
+		flagSet.BoolSlice(name, slice, desc)
+	default:
+		panicType(t.Type)
+	}
+}
+
+func panicType(t reflect.Type) {
+	panic(fmt.Sprintf("Unexpected type %d %v", t.Kind(), t.Name()))
 }
 
 func (a *appConfig) initFiles() {
@@ -108,8 +141,32 @@ func (a *appConfig) loadValue(v reflect.Value, t reflect.StructField) {
 		v.SetInt(a.v.GetInt64(name))
 	case reflect.Float32, reflect.Float64:
 		v.SetFloat(a.v.GetFloat64(name))
-	// TODO check for nested struct and call recursively
+	case reflect.Bool:
+		v.SetBool(a.v.GetBool(name))
+	case reflect.Slice:
+		a.loadValueSlice(v, t, name)
 	default:
-		panic("Unexpected type " + t.Name)
+		panicType(t.Type)
+		// TODO check for nested struct and call recursively
+	}
+}
+
+func (a *appConfig) loadValueSlice(v reflect.Value, t reflect.StructField, name string) {
+	switch t.Type.Elem().Kind() {
+	case reflect.String:
+		v.Set(reflect.ValueOf(a.v.GetStringSlice(name)))
+	case reflect.Int:
+		ints := a.v.GetIntSlice(name)
+		// for some reason when it is an env, the GetIntSlice doesn't return the slice
+		if len(ints) == 0 {
+			strs := a.v.GetStringSlice(name)
+			ints = make([]int, len(strs))
+			for i := range strs {
+				ints[i], _ = strconv.Atoi(strs[i])
+			}
+		}
+		v.Set(reflect.ValueOf(ints))
+	default:
+		panicType(t.Type)
 	}
 }
