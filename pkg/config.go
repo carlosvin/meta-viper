@@ -18,6 +18,7 @@ var cfgDirNames = [...]string{"config", "configs", "cfg"}
 const flagName = "config"
 const flagDirs = "config-dirs"
 
+// Cfg Configuration loader
 type Cfg interface {
 	Load() error
 }
@@ -83,8 +84,8 @@ func (a *appConfig) initEnv() {
 
 func (a *appConfig) initFlags(args []string) {
 	// Flags config
-	flagSet := pflag.NewFlagSet("flagsConfig", pflag.ContinueOnError)
-	flagSet.String(flagName, "prod", "Configuration name")
+	flagSet := pflag.NewFlagSet("flagsConfig", pflag.ExitOnError)
+	flagSet.String(flagName, "", "Configuration name")
 	flagSet.StringSlice(flagDirs, a.searchDirs, "Configuration directories search paths")
 	for i := 0; i < a.t.NumField(); i++ {
 		a.initFlag(a.t.Field(i), a.t.Type().Field(i), flagSet)
@@ -137,8 +138,12 @@ func panicType(t reflect.Type) {
 func (a *appConfig) initFiles() {
 	// Config files
 	configName := a.v.GetString("config")
+	if configName == "" {
+		log.Println("No configuration name has been specified, so no configuration file will be loaded. Using flags and environment variables.")
+		return
+	}
 	a.v.SetConfigName(configName)
-	searchDirs := a.v.GetStringSlice("config-dirs")
+	searchDirs := a.v.GetStringSlice(flagDirs)
 	for _, d := range searchDirs {
 		a.v.AddConfigPath(d)
 	}
