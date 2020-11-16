@@ -1,6 +1,8 @@
 = Configure Viper using Struct
 Carlos Martin Sanchez
 v0.0.1
+:source-highlighter: prettify
+
 
 :viper: https://github.com/spf13/viper[viper,window=_blank]
 :go: https://golang.org/[golang,window=_blank]
