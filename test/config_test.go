@@ -1,4 +1,4 @@
-package test
+package config
 
 import (
 	"fmt"
@@ -17,9 +17,11 @@ type TestConfig struct {
 	C   float64  `cfg_name:"c" cfg_desc:"C is a config value for something"`
 	D   []string `cfg_name:"d"`
 	E   []int    `cfg_name:"e" cfg_desc:"Description of list of integers"`
+	F   bool     `cfg_name:"f" cfg_desc:"a boolean"`
 }
 
 func TestEnv(t *testing.T) {
+
 	tc := &TestConfig{
 		A: "default",
 		B: 123,
@@ -41,11 +43,13 @@ func TestEnv(t *testing.T) {
 	assert.Equal(t, 3.1415926, tc.C)
 	assert.Equal(t, []string{"a", "b"}, tc.D)
 	assert.Equal(t, []int{1, 2, 3}, tc.E)
+	assert.Equal(t, false, tc.F)
 
 	os.Setenv("A", "new value")
 	os.Setenv("B64", fmt.Sprintf("%d", math.MaxInt64))
 	os.Setenv("C", "0.99999")
 	os.Setenv("D", "1 2 3")
+	os.Setenv("F", "1")
 
 	assert.NoError(t, cfg.Reload())
 	assert.Equal(t, "new value", tc.A)
@@ -54,12 +58,13 @@ func TestEnv(t *testing.T) {
 	assert.Equal(t, 0.99999, tc.C)
 	assert.Equal(t, []string{"1", "2", "3"}, tc.D)
 	assert.Equal(t, []int{1, 2, 3}, tc.E)
+	assert.Equal(t, true, tc.F)
 	cleanupEnv()
 }
 
 func TestFlags(t *testing.T) {
 	args := []string{
-		"test-flags",
+		"test-flagss",
 		"--a=imaflag",
 		fmt.Sprintf("--b64=%d", math.MinInt64),
 		"--d=1,2,3",
@@ -105,4 +110,36 @@ func cleanupEnv() {
 	os.Setenv("C", "")
 	os.Setenv("D", "")
 	os.Setenv("E", "")
+}
+
+type invalidNestedConfig struct {
+	A      string
+	Nested TestConfig `cfg_name:"nested" cfg_desc:"nested config does not work"`
+}
+
+func TestInvalidNestedFiles(t *testing.T) {
+	tc := &invalidNestedConfig{A: "default"}
+	_, err := config.New(tc, []string{".", "--config=test"})
+	assert.Error(t, err)
+}
+
+func TestInvalidConfigFile(t *testing.T) {
+	tc := &TestConfig{A: "default", B: 123, B64: 1, C: 1.1111, D: []string{"a", "b"}}
+	_, err := config.New(tc, []string{"--config-dirs=./invalid", "--config=test"})
+	assert.Error(t, err)
+}
+
+type invalidConfigSliceType struct {
+	A       string
+	Invalid []float32 `cfg_name:"invalid_float" cfg_desc:"float slice"`
+}
+
+func TestInvalidSliceType(t *testing.T) {
+	tc := &invalidConfigSliceType{
+		A:       "default",
+		Invalid: []float32{1.1, 2.2}}
+	_, err := config.New(tc, []string{
+		"test",
+		"--config=test"})
+	assert.Error(t, err)
 }
