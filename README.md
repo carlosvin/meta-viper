@@ -4,14 +4,14 @@ Meta-Viper is a wrapper over [viper](https://github.com/spf13/viper), it uses a 
 
 2.  Load application configuration on that same struct.
 
-You can find examples at [./examples](./examples).
+You can find examples at [./examples](./examples) or in this article: https://carlosvin.github.io/posts/create-cmd-tool-golang.
 
 ![meta viper](https://pkg.go.dev/badge/github.com/carlosvin/meta-viper)
 
 Usage {#_usage}
-=====
+====================
 
-Define the struct holding your application config {#_define_the_struct_holding_your_application_config}
+Define the struct holding your application config
 -------------------------------------------------
 
 Meta-Viper will try to load the configuration in that struct from configuration files, environment variables or flags.
@@ -25,7 +25,7 @@ import (
     "fmt"
     "os"
 
-    config "github.com/carlosvin/meta-viper/pkg"
+    config "github.com/carlosvin/meta-viper"
 )
 
 type appConfig struct {
