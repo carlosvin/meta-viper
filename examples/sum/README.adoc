@@ -1,0 +1,12 @@
+= Sum example
+
+Simple command line tool to sum a + b and print the result.
+
+.It runs the command from examples directory
+[source,bash]
+----
+go run sum/main.go --a=10 --b=-1000
+
+# Output
+# 10.000000 + -1000.000000 = -990.000000
+----

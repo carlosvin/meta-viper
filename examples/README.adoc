@@ -1,3 +1,4 @@
 = Usage examples
 
+- link:./sum[Adder (a+b)]
 - link:./multi-env[Multi Environment]
