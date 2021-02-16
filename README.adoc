@@ -1,6 +1,6 @@
 = Configure Viper using Struct
 Carlos Martin Sanchez
-v0.0.1
+v0.0.2
 :source-highlighter: prettify
 
 
